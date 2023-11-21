@@ -108,12 +108,16 @@ def dijkstra_sled_quick(graph, tv, start):
         t, town = heapq.heappop(l)
         if visited[town]:
             continue
-        for town_, dist_ in graph[town]:
-            t_ = tv[town_][0] + dist_ / tv[town_][1]
-
+        for town_ in range(2, len(graph)):
             if visited[town_]:
                 continue
 
+            if town > town_:
+                dist_ = graph[town][town_]
+            else:
+                dist_ = graph[town_][town]
+
+            t_ = tv[town_][0] + dist_ / tv[town_][1]
             t_ += time_[town]
             if time_[town_] > t_:
                 time_[town_] = t_
@@ -124,30 +128,32 @@ def dijkstra_sled_quick(graph, tv, start):
     return time_, path
 
 
-def bfs(graph, graph_firstly, town_dist):
+def bfs(counter, graph, graph_firstly, town_dist):
     q = queue.Queue()
     q.put(town_dist)
-
-    visited = [False for _ in range(len(graph))]
-    visited[0] = True
+    # visited = [0 for _ in range(len(graph))]
+    # visited[0] = 1
     goal_town = town_dist[0]
 
     while not q.empty():
-        town, dist = q.get()
-        visited[town] = True
+        town, dist, prev_town = q.get()
+        # visited[town] = 1
         for town_, dist_ in graph_firstly[town]:
-            if not visited[town_]:
+            # if not visited[town_]:
+            if town_ != prev_town:
+                counter +=1
+                # print(goal_town, " -- ", town, dist, visited[town], "---", town_, dist_, visited[town_])
                 d = dist + dist_
-                q.put((town_, d))
+                q.put((town_, d, town))
 
-                if goal_town != town_:
-                    if goal_town > town_:
-                        goal_town, town_ = town_, goal_town
-                    graph[goal_town].append((town_, d))
-    return graph
+                if goal_town > town_:
+                    graph[goal_town][town_] = d
+                if goal_town < town_:
+                    graph[town_][goal_town] = d
+    return graph, counter
 
-# @memory_profiler.profile
-def main():
+
+if __name__ == "__main__":
     n = int(input().strip())
 
     tv = [() for _ in range(n + 1)]
@@ -155,22 +161,19 @@ def main():
         t, v = map(int, input().strip().split())
         tv[i] = (t, v)
 
-    graph = [[] for _ in range(n + 1)]
-    graph_firstly = [[] for _ in range(n+1)]
+    graph = [[math.inf for _ in range(i + 1)] for i in range(n + 1)]
+    graph_firstly = [[] for _ in range(n + 1)]
 
     for _ in range(1, n):
         a, b, s = map(int, input().strip().split())
-        if a > b:
-            a, b = b, a
-        # graph[a].append((b, s))
         graph_firstly[a].append((b, s))
+        graph_firstly[b].append((a, s))
 
-    # sec = time.time()
-
+    sec = time.time()
+    counter = 0
     for i in range(1, n + 1):
-        graph = bfs(graph, graph_firstly, (i, 0))
-    for i in range(len(graph)):
-        print(i, graph[i])
+        graph, counter = bfs(counter, graph, graph_firstly, (i, 0, 0))
+    print(time.time()-sec, counter)
 
     time_, path_ = dijkstra_sled_quick(graph, tv, 1)
     ind = t = 0
@@ -178,7 +181,6 @@ def main():
         if t < time_[i]:
             t = time_[i]
             ind = i
-
     path = [ind]
     while path_[ind] != -1:
         path.append(path_[ind])
@@ -186,9 +188,3 @@ def main():
 
     print('{:.10f}'.format(t))
     print(" ".join(map(str, path)))
-    # sec = time.time() - sec
-    # print(sec)
-
-
-if __name__ == "__main__":
-    main()
