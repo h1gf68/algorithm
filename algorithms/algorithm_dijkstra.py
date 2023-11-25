@@ -76,22 +76,51 @@ def dijkstra_path(arr, n, s, f, m):
     return " ".join(map(str, res[::-1])) if len(res) > 1 else -1
 
 
-def dfs(graph, tv, visited, curr_town, dist, goal_town):
-    visited[curr_town] = True
-    for town_, dist_, t_ in graph[curr_town]:
-        if not visited[town_]:
-            dist += dist_
-            if curr_town > goal_town:
-                tab = tv[town_][0] + dist / tv[town_][1]
-                tba = tv[goal_town][0] + dist / tv[goal_town][1]
-                graph[town_].append((goal_town, dist, tab))
-                graph[goal_town].append((town_, dist, tba))
-                dfs(town_, dist, goal_town)
-            else:
-                dfs(town_, dist_, goal_town)
+
+def bfs(counter, graph, graph_firstly, goal_town, q:queue):
+
+    while not q.empty():
+        town, dist, prev_town = q.get()
+        for town_, dist_ in graph_firstly[town]:
+            if town_ != prev_town:
+                counter += 1
+                # print(goal_town, " -- ", town, dist, visited[town], "---", town_, dist_, visited[town_])
+
+                d = dist + dist_
+                q.put((town_, d, town))
+
+                if goal_town > town_:
+                    i, j = goal_town, town_
+                elif goal_town < town_:
+                    i, j = town_, goal_town
+                graph[i][j] = d
+
+    return graph, counter
 
 
+def bfs_(counter, graph, graph_firstly, goal_town, dist, prev_town):
+    q = queue.Queue()
+    q.put((goal_town, dist, prev_town))
 
+    while not q.empty():
+        town, dist, prev_town = q.get()
+        for town_, dist_ in graph_firstly[town]:
+            if town_ != prev_town and graph[goal_town][town_]==math.inf:
+                counter += 1
+                # print(goal_town, " -- ", town, dist, visited[town], "---", town_, dist_, visited[town_])
+
+                d = dist + dist_
+                q.put((town_, d, town))
+
+                graph[goal_town][town_] = d
+                graph[town_][goal_town] = d
+
+    return graph, counter
+
+
+import sys
+import math
+import heapq
 
 def dijkstra_sled_quick(graph, tv, start):
     l = [(0, start)]
@@ -128,29 +157,16 @@ def dijkstra_sled_quick(graph, tv, start):
     return time_, path
 
 
-def bfs(counter, graph, graph_firstly, town_dist):
-    q = queue.Queue()
-    q.put(town_dist)
-    # visited = [0 for _ in range(len(graph))]
-    # visited[0] = 1
-    goal_town = town_dist[0]
+def dfs(graph, graph_firstly, visited, goal_town, town, dist, prev_town, counter=1):
+    counter += 1
+    visited[town] = True
+    for town_, dist_ in graph_firstly[town]:
+        if town_ != prev_town:
+            graph[goal_town][town_] = dist + dist_
+            dfs(graph, graph_firstly, visited, goal_town, town_, dist+dist_, town, counter)
 
-    while not q.empty():
-        town, dist, prev_town = q.get()
-        # visited[town] = 1
-        for town_, dist_ in graph_firstly[town]:
-            # if not visited[town_]:
-            if town_ != prev_town:
-                counter +=1
-                # print(goal_town, " -- ", town, dist, visited[town], "---", town_, dist_, visited[town_])
-                d = dist + dist_
-                q.put((town_, d, town))
+    return graph
 
-                if goal_town > town_:
-                    graph[goal_town][town_] = d
-                if goal_town < town_:
-                    graph[town_][goal_town] = d
-    return graph, counter
 
 
 if __name__ == "__main__":
@@ -161,21 +177,21 @@ if __name__ == "__main__":
         t, v = map(int, input().strip().split())
         tv[i] = (t, v)
 
-    graph = [[math.inf for _ in range(i + 1)] for i in range(n + 1)]
     graph_firstly = [[] for _ in range(n + 1)]
-
     for _ in range(1, n):
         a, b, s = map(int, input().strip().split())
         graph_firstly[a].append((b, s))
         graph_firstly[b].append((a, s))
 
-    sec = time.time()
-    counter = 0
-    for i in range(1, n + 1):
-        graph, counter = bfs(counter, graph, graph_firstly, (i, 0, 0))
-    print(time.time()-sec, counter)
 
-    time_, path_ = dijkstra_sled_quick(graph, tv, 1)
+    sys.setrecursionlimit(3000)
+    graph2 = [[math.inf for _ in range(n + 1)] for i in range(n + 1)]
+    visited = [False for _ in range(n+1)]
+    for i in range(1, n + 1):
+        graph2 = dfs(graph2, graph_firstly, visited, i, i, 0, 0)
+
+
+    time_, path_ = dijkstra_sled_quick(graph2, tv, 1)
     ind = t = 0
     for i in range(1, len(time_)):
         if t < time_[i]:
