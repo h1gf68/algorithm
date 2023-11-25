@@ -1,4 +1,7 @@
 import itertools as it
+import time
+
+
 def permutations(arr, ind=0):
 
     if ind == len(arr) - 1:
@@ -51,33 +54,6 @@ def perms2(iterable, r=None):
 # ----------------------------------------------
 
 
-import itertools
-
-
-def get_comb(arr, n):
-    max_weight = 0
-    parts = ""
-    for p in itertools.product("21", repeat=n):
-        weight = get_long(arr, n, p)
-        if weight > max_weight:
-            max_weight = weight
-            parts = p
-
-    return str(max_weight), " ".join(parts)
-
-
-def get_long(arr, n, visited):
-    s = set()
-    weight = 0
-    for i in range(1, n):
-        for j in range(i + 1, n):
-            if visited[i] != visited[j]:
-                weight += arr[i][j]
-                s.add((i, j))
-                s.add((j, i))
-    return weight
-
-
 def get_comb2(arr, n, first, segm=2, s=set([5]), v="5 ", counter=1):
     if counter == n:
         print(v)
@@ -88,17 +64,68 @@ def get_comb2(arr, n, first, segm=2, s=set([5]), v="5 ", counter=1):
             get_comb2(arr, n, first, segm, s|{i}, v+str(i)+" ", counter+1)
 
 
+import itertools
 
-# if __name__ == "__main__":
-#     n = int(input().strip())
-#     arr = [[0 for _ in range(n)] for _ in range(n)]
-#
-#     for i in range(n):
-#         for j, weight in enumerate(map(int, input().strip().split())):
-#             arr[i][j] = weight
-#
-#     # print("\n".join(get_comb(arr, n)))
-#     get_comb2(arr, n, 5)
+
+def get_comb(arr, n):
+    max_weight = 0
+    parts = ""
+    for p in itertools.product("21", repeat=n):
+        a = b = []
+        for i in range(n):
+            if p[i] == 2:
+                a.append(i)
+            else:
+                b.append(i)
+        weight = get_long(arr, n, p, a, b)
+        if weight > max_weight:
+            max_weight = weight
+            parts = p
+
+    return str(max_weight), " ".join(parts)
+
+
+def get_long(arr, n, visited, a, b):
+    s = set()
+    weight = 0
+    for i in a:
+        for j in b:
+            weight += arr[i][j]
+    # for i in range(n):
+    #     for j in range(i + 1, n):
+    #         if visited[i] != visited[j]:
+    #             weight += arr[i][j]
+    #             s.add((i, j))
+    #             s.add((j, i))
+    return weight
+
+
+if __name__ == "__main__":
+    n = int(input().strip())
+    arr = [[0 for _ in range(n)] for _ in range(n)]
+    max_edge = [0 for _ in range(n)]
+    min_edge = [0 for _ in range(n)]
+    sum_edge = [0 for _ in range(n)]
+
+
+
+    for i in range(n):
+        arr[i] = list(map(int, input().strip().split()))
+        max_edge[i] = max(arr[i])
+        min_edge[i] = min(filter(lambda x: x>0, arr[i]))
+        sum_edge[i] = sum(arr[i])
+
+        # for j, weight in enumerate(map(int, input().strip().split())):
+        #     arr[i][j] = weight
+
+    print(sum_edge)
+    print(max_edge)
+    print(min_edge)
+
+    start = time.time()
+    print("\n".join(get_comb(arr, n)))
+    print(time.time()-start)
+
 
 
 import heapq
@@ -143,35 +170,41 @@ def get_long_edge(heap, j):
     return (weights, " ".join(map(str, visited))), new_heap
 
 
-if __name__ == "__main__":
-    n = int(input().strip())
-    arr_heap = [[] for _ in range(n)]
-    arr = [[0 for _ in range(n)] for _ in range(n)]
-    sum_j = []
-    for i in range(n):
-        for j, weight in enumerate(map(int, input().strip().split())):
-            arr[i][j] = weight
-            if weight > 0:
-                arr_heap[i].append((1000-weight, i, j))
-
-    weight = 0
-    visited = "2 1"
-    min_id = min_sum = 20*1000
-    for j in range(n):
-        tmp_sum = sum(arr[j])
-        if tmp_sum <= min_sum:
-            min_sum = tmp_sum
-            min_id = j
-
-        # res, arr_heap = get_long_edge(arr_heap, j)
-        # print(j, res)
-        # if res[0] >= weight:
-        #     weight = res[0]
-        #     visited = res[1]
-    print(min_sum, min_id)
-    (weight, visited), arr = get_long_edge(arr_heap, min_id)
-
-    print(weight)
-    print(visited)
-    print(sum_j)
+# if __name__ == "__main__":
+#     n = int(input().strip())
+#     arr_heap = [[] for _ in range(n)]
+#     arr = [[0 for _ in range(n)] for _ in range(n)]
+#     sum_j = []
+#     for i in range(n):
+#         for j, weight in enumerate(map(int, input().strip().split())):
+#             arr[i][j] = weight
+#             if weight > 0:
+#                 arr_heap[i].append((1000-weight, i, j))
+#
+#     weight = 0
+#     visited = "2 1"
+#     min_id = min_sum = n*1000
+#     max_id = max_sum = 0
+#     for j in range(n):
+#         tmp_sum = sum(arr[j])
+#         print(j, tmp_sum)
+#         if tmp_sum < min_sum:
+#             min_sum = tmp_sum
+#             min_id = j
+#         if tmp_sum > max_sum:
+#             max_sum = tmp_sum
+#             max_id = j
+#
+#         # res, arr_heap = get_long_edge(arr_heap, j)
+#         # print(j, res)
+#         # if res[0] >= weight:
+#         #     weight = res[0]
+#         #     visited = res[1]
+#     print(min_sum, min_id)
+#     print(max_sum, max_id)
+#     (weight, visited), arr = get_long_edge(arr_heap, min_id)
+#
+#     print(weight)
+#     print(visited)
+#     print(sum_j)
 
