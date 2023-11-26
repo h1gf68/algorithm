@@ -54,6 +54,29 @@ def perms2(iterable, r=None):
 
 # ----------------------------------------------
 
+def dinosaurs(mines, n, i, counter):
+    for j in range(1, n+1):
+        if (i, j) not in mines:
+            if i == n:
+                return counter + 1
+            counter = dinosaurs(mines | mark_mines(set(), n, i, j), n, i+1, counter)
+    return counter
+
+
+def mark_mines(mines, n, i, j):
+    mines.add((i, j))
+    for x in range(1, n+1-i):
+        mines.add((i+x, j))
+        mines.add((i+x, j+x))
+        mines.add((i+x, j-x))
+    return mines
+
+
+# if __name__ == "__main__":
+#     n = int(input().strip())
+#     print(dinosaurs(set(), n, 1, 0))
+
+# ------------------------------------------------
 
 def get_comb2(arr, n, first, segm=2, s=set([5]), v="5 ", counter=1):
     if counter == n:
